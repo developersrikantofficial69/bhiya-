@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stunning To-Do List</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Default light mode background */
+        }
+        .dark body {
+            background-color: #111827; /* Default dark mode background */
+        }
+        /* Custom transition for list items */
+        .task-item {
+            transition: all 0.3s ease-in-out;
+        }
+        /* Style for the circular checkbox */
+        .task-checkbox {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        /* Style for completed tasks */
+        .completed .task-text {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+        .completed .task-checkbox {
+            background-color: #4f46e5; /* indigo-600 */
+            border-color: #4f46e5;
+        }
+        .completed .task-checkbox svg {
+            transform: scale(1);
+        }
+        .task-checkbox svg {
+            transform: scale(0);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+
+    <div class="container mx-auto max-w-2xl min-h-screen flex flex-col pt-12 sm:pt-20 px-4">
+        
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-500">
+                My To-Do List
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Get organized, one task at a time.</p>
+        </header>
+
+        <main class="flex-grow">
+            <!-- Task Input Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5 mb-8">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" id="taskInput" placeholder="e.g., Design a new website" class="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                </div>
+                 <button id="addTaskBtn" class="w-full mt-4 bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    Add Task
+                </button>
+            </div>
+
+            <!-- Task List -->
+            <div id="taskListContainer" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
+                <ul id="taskList" class="space-y-3">
+                    <!-- Empty state -->
+                    <li class="text-center text-gray-500 dark:text-gray-400 py-8" id="emptyMessage">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tasks</h3>
+                        <p class="mt-1 text-sm text-gray-500">Get started by adding a new task.</p>
+                    </li>
+                    <!-- Tasks will be dynamically inserted here -->
+                </ul>
+            </div>
+        </main>
+
+        <!-- Footer with Task Stats -->
+        <footer class="mt-8 mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
+            <div class="flex justify-around text-center">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
+                    <p id="total-tasks" class="text-2xl font-bold text-gray-800 dark:text-white">0</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                    <p id="completed-tasks" class="text-2xl font-bold text-green-500">0</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Remaining</p>
+                    <p id="remaining-tasks" class="text-2xl font-bold text-yellow-500">0</p>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Element References ---
+            const taskInput = document.getElementById('taskInput');
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const taskList = document.getElementById('taskList');
+            const emptyMessage = document.getElementById('emptyMessage');
+            
+            // --- Stat Counters ---
+            const totalTasksEl = document.getElementById('total-tasks');
+            const completedTasksEl = document.getElementById('completed-tasks');
+            const remainingTasksEl = document.getElementById('remaining-tasks');
+
+            // --- Load tasks from localStorage when the page loads ---
+            loadTasks();
+
+            // --- Event Listeners ---
+            addTaskBtn.addEventListener('click', handleAddTask);
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleAddTask();
+                }
+            });
+            taskList.addEventListener('click', handleTaskActions);
+
+            /**
+             * Handles the logic for adding a new task.
+             */
+            function handleAddTask() {
+                const taskText = taskInput.value.trim();
+                if (taskText === '') return;
+                
+                createTaskElement(taskText, false);
+                taskInput.value = '';
+                taskInput.focus();
+                updateUI();
+            }
+
+            /**
+             * Handles clicks within the task list for completing or deleting tasks.
+             * @param {Event} e The click event.
+             */
+            function handleTaskActions(e) {
+                const target = e.target;
+                const taskItem = target.closest('.task-item');
+                if (!taskItem) return;
+
+                // Check if the checkbox area or text was clicked to complete
+                if (target.matches('.task-interaction-area') || target.closest('.task-interaction-area')) {
+                    taskItem.classList.toggle('completed');
+                    updateUI();
+                }
+
+                // Check if the delete button was clicked
+                if (target.matches('.delete-btn') || target.closest('.delete-btn')) {
+                    taskItem.style.opacity = '0';
+                    taskItem.style.transform = 'translateX(20px)';
+                    setTimeout(() => {
+                        taskItem.remove();
+                        updateUI();
+                    }, 300);
+                }
+            }
+
+            /**
+             * Creates and appends a new task list item to the DOM.
+             * @param {string} text The description of the task.
+             * @param {boolean} isCompleted Whether the task is already completed.
+             */
+            function createTaskElement(text, isCompleted) {
+                const li = document.createElement('li');
+                li.className = 'task-item flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700';
+                if (isCompleted) {
+                    li.classList.add('completed');
+                }
+
+                // Create a wrapper for checkbox and text for easier clicking
+                const interactionArea = document.createElement('div');
+                interactionArea.className = 'task-interaction-area flex-grow flex items-center gap-3 cursor-pointer';
+
+                // Custom checkbox
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'task-checkbox flex-shrink-0 h-6 w-6 border-2 border-gray-300 dark:border-gray-500 rounded-full flex items-center justify-center';
+                checkboxDiv.innerHTML = `<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`;
+                
+                // Task text
+                const taskTextSpan = document.createElement('span');
+                taskTextSpan.textContent = text;
+                taskTextSpan.className = 'task-text text-gray-800 dark:text-gray-200';
+
+                interactionArea.appendChild(checkboxDiv);
+                interactionArea.appendChild(taskTextSpan);
+
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                deleteBtn.className = 'delete-btn flex-shrink-0 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition ml-4';
+                
+                li.appendChild(interactionArea);
+                li.appendChild(deleteBtn);
+                
+                taskList.appendChild(li);
+            }
+
+            /**
+             * Updates the visibility of the empty message.
+             */
+            function updateEmptyMessage() {
+                const taskItems = taskList.querySelectorAll('.task-item');
+                emptyMessage.style.display = taskItems.length === 0 ? 'block' : 'none';
+            }
+            
+            /**
+             * Updates the task statistics in the footer.
+             */
+            function updateStats() {
+                const totalTasks = document.querySelectorAll('.task-item').length;
+                const completedTasks = document.querySelectorAll('.task-item.completed').length;
+                const remainingTasks = totalTasks - completedTasks;
+
+                totalTasksEl.textContent = totalTasks;
+                completedTasksEl.textContent = completedTasks;
+                remainingTasksEl.textContent = remainingTasks;
+            }
+
+            /**
+             * Saves all current tasks to localStorage.
+             */
+            function saveTasks() {
+                const tasks = [];
+                document.querySelectorAll('.task-item').forEach(taskItem => {
+                    tasks.push({
+                        text: taskItem.querySelector('.task-text').textContent,
+                        completed: taskItem.classList.contains('completed')
+                    });
+                });
+                localStorage.setItem('todos-v2', JSON.stringify(tasks));
+            }
+
+            /**
+             * Loads tasks from localStorage and displays them.
+             */
+            function loadTasks() {
+                const storedTasks = JSON.parse(localStorage.getItem('todos-v2'));
+                if (storedTasks) {
+                    storedTasks.forEach(task => createTaskElement(task.text, task.completed));
+                }
+                updateUI();
+            }
+
+            /**
+             * A helper function to run all UI updates at once.
+             */
+            function updateUI() {
+                updateEmptyMessage();
+                updateStats();
+                saveTasks();
+            }
+        });
+    </script>
+</body>
+</html>
